@@ -15,6 +15,7 @@
 #define NPC_ATTACK_COOLDOWN 1.0
 #define PLAYER_ATTACK_COOLDOWN 5.0
 #define PLAYER_HP 50
+#define SHAPES_SIZE 30
 
 typedef enum {
   FAST,
@@ -22,6 +23,11 @@ typedef enum {
   AVERAGE,
   ENUM_COUNT,
 } MonsterShape;
+
+typedef struct {
+  float x;
+  float y;
+} ShapeCenter;
 
 typedef struct {
   int up_down;
@@ -56,6 +62,7 @@ void draw_moving_text(const char *text, float x, float y,
 void button_movement(Direction *direction);
 void draw_character_movable(MovableObject *object);
 void draw_character_static(NPC *object);
-void attack_circle(MovableObject *object, NPC *npcs, Direction *direction);
+void attack_circle(MovableObject *object, NPC *npcs);
 void move_npcs(NPC *npcs, MovableObject *target);
 void current_hp(MovableObject *object);
+ShapeCenter get_shape_center(NPC *npc);

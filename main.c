@@ -1,4 +1,5 @@
 #include "logic.h"
+#include <raylib.h>
 #include <stdlib.h>
 
 NPC npcs[NUM_OF_NPCS];
@@ -27,12 +28,12 @@ int main(void) {
   SetTargetFPS(FPS_LIMIT);
   while (!WindowShouldClose()) {
     BeginDrawing();
-    ClearBackground(BLACK);
+    ClearBackground(DARKGRAY);
     draw_character_movable(&object);
     for (int i = 0; i < NUM_OF_NPCS; i++) {
       draw_character_static(&npcs[i]);
     }
-    attack_circle(&object, npcs, &direction);
+    attack_circle(&object, npcs);
     button_movement(&direction);
     object.x = object.x + (1 * direction.up_down) * MOVEMENT_SPEED_MULTIPLIER;
     object.y =

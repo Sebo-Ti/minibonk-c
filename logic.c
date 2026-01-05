@@ -15,23 +15,52 @@ void draw_character_movable(MovableObject *object) {
 }
 
 void draw_character_static(NPC *object) {
-  // switch (object->monster_shape) {
-  // case FAST:
-  //   printf("This will be fast monster Triangle");
-  // case SLOW:
-  //   printf("This will be slow monster Rectangle");
-  // case AVERAGE:
-  //   printf("This will be average monster Circle");
-  // }
-  Rectangle character = {object->y, object->x, 50, 50};
   Color object_color;
   if (object->hp >= 1) {
-    object_color = RED;
+    switch (object->monster_shape) {
+    case FAST:
+      object_color = PURPLE;
+      break;
+    case AVERAGE:
+      object_color = BLUE;
+      break;
+    case SLOW:
+      object_color = RED;
+      break;
+    default:
+      object_color = GRAY;
+      break;
+    }
+    // object_color = RED;
   } else {
     object_color = ORANGE;
   }
-  DrawRectangleRec(character, object_color);
-  DrawText("NPC", character.x, character.y - FONT_SIZE, FONT_SIZE, YELLOW);
+  switch (object->monster_shape) {
+  case FAST: {
+    Vector2 top = {object->y, object->x};
+    Vector2 left = {object->y - SHAPES_SIZE, object->x + SHAPES_SIZE};
+    Vector2 right = {object->y + SHAPES_SIZE, object->x + SHAPES_SIZE};
+    DrawTriangle(top, left, right, object_color);
+    DrawText("NPC", top.x, top.y - FONT_SIZE, FONT_SIZE, YELLOW);
+    break;
+  }
+  case SLOW: {
+    Rectangle character = {object->y, object->x, SHAPES_SIZE, SHAPES_SIZE};
+    DrawRectangleRec(character, object_color);
+    DrawText("NPC", character.x, character.y - FONT_SIZE, FONT_SIZE, YELLOW);
+    break;
+  }
+  case AVERAGE: {
+    Vector2 center = {object->y, object->x};
+    DrawCircleV(center, SHAPES_SIZE, object_color);
+    DrawText("NPC", center.x, center.y - SHAPES_SIZE - FONT_SIZE, FONT_SIZE,
+             YELLOW);
+    break;
+  }
+
+  default:
+    break;
+  }
 }
 
 void draw_moving_text(const char *text, float x, float y,
@@ -40,7 +69,7 @@ void draw_moving_text(const char *text, float x, float y,
   DrawText(text, y, x, FONT_SIZE, ORANGE);
 }
 
-void attack_circle(MovableObject *object, NPC *npcs, Direction *direction) {
+void attack_circle(MovableObject *object, NPC *npcs) {
   // if (IsKeyPressed(KEY_SPACE)) {
   // if (GetTime() - object->last_attack >= PLAYER_ATTACK_COOLDOWN) {
   if (GetTime() - object->last_attack >= player_attack_speed) {
@@ -110,9 +139,24 @@ void button_movement(Direction *direction) {
 }
 
 void move_npcs(NPC *npcs, MovableObject *target) {
+  float speed;
   for (int i = 0; i < NUM_OF_NPCS; i++) {
     if (npcs[i].is_dead) {
       continue;
+    }
+    switch (npcs[i].monster_shape) {
+    case FAST:
+      speed = 2.0f;
+      break;
+    case SLOW:
+      speed = 0.5f;
+      break;
+    case AVERAGE:
+      speed = 1.0f;
+      break;
+    default:
+      speed = 0.0f;
+      break;
     }
     float my = target->y - npcs[i].y;
     float mx = target->x - npcs[i].x;
@@ -120,8 +164,10 @@ void move_npcs(NPC *npcs, MovableObject *target) {
     float distance = sqrt(my * my + mx * mx);
 
     if (distance >= 1) {
-      npcs[i].y += (my / distance) * npcs_speed;
-      npcs[i].x += (mx / distance) * npcs_speed;
+      // npcs[i].y += (my / distance) * npcs_speed;
+      // npcs[i].x += (mx / distance) * npcs_speed;
+      npcs[i].y += (my / distance) * speed;
+      npcs[i].x += (mx / distance) * speed;
     }
     if (distance <= 30) {
       if (GetTime() - npcs[i].last_attack >= NPC_ATTACK_COOLDOWN) {
@@ -137,4 +183,19 @@ void current_hp(MovableObject *object) {
   char buffer[20];
   sprintf(buffer, "Current hp: %d", object->hp);
   DrawText(buffer, 10, 10, FONT_SIZE, RED);
+}
+
+ShapeCenter get_shape_center(NPC *npc) {
+  ShapeCenter center;
+  switch (npc->monster_shape) {
+  case FAST:
+    break;
+  case AVERAGE:
+    break;
+  case SLOW:
+    break;
+  default:
+    break;
+  }
+  return center;
 }
