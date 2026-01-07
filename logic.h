@@ -53,6 +53,14 @@ typedef struct {
   MonsterShape monster_shape;
 } NPC;
 
+typedef struct {
+  float x;
+  float y;
+  float vx;
+  float vy;
+  bool alive;
+} Projectile;
+
 extern int points_left;
 extern float npcs_speed;
 extern float player_attack_speed;
@@ -66,3 +74,7 @@ void attack_circle(MovableObject *object, NPC *npcs);
 void move_npcs(NPC *npcs, MovableObject *target);
 void current_hp(MovableObject *object);
 ShapeCenter get_shape_center(NPC *npc);
+void draw_projectile(Projectile *projectile);
+// void move_projectile(Projectile *projectile, NPC *target);
+void move_projectile(Projectile *projectile);
+void shoot_projectile(MovableObject *object, Projectile *projectile);

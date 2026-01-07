@@ -8,7 +8,7 @@ float npcs_speed = 1.0;
 float player_attack_speed = 3.0;
 
 void draw_character_movable(MovableObject *object) {
-  Rectangle character = {object->y, object->x, 50, 50};
+  Rectangle character = {object->x, object->y, 50, 50};
   DrawRectangleRec(character, GREEN);
   DrawText(object->name, character.x, character.y - FONT_SIZE, FONT_SIZE,
            YELLOW);
@@ -37,21 +37,21 @@ void draw_character_static(NPC *object) {
   }
   switch (object->monster_shape) {
   case FAST: {
-    Vector2 top = {object->y, object->x};
-    Vector2 left = {object->y - SHAPES_SIZE, object->x + SHAPES_SIZE};
-    Vector2 right = {object->y + SHAPES_SIZE, object->x + SHAPES_SIZE};
+    Vector2 top = {object->x, object->y};
+    Vector2 left = {object->x - SHAPES_SIZE, object->y + SHAPES_SIZE};
+    Vector2 right = {object->x + SHAPES_SIZE, object->y + SHAPES_SIZE};
     DrawTriangle(top, left, right, object_color);
     DrawText("NPC", top.x, top.y - FONT_SIZE, FONT_SIZE, YELLOW);
     break;
   }
   case SLOW: {
-    Rectangle character = {object->y, object->x, SHAPES_SIZE, SHAPES_SIZE};
+    Rectangle character = {object->x, object->y, SHAPES_SIZE, SHAPES_SIZE};
     DrawRectangleRec(character, object_color);
     DrawText("NPC", character.x, character.y - FONT_SIZE, FONT_SIZE, YELLOW);
     break;
   }
   case AVERAGE: {
-    Vector2 center = {object->y, object->x};
+    Vector2 center = {object->x, object->y};
     DrawCircleV(center, SHAPES_SIZE, object_color);
     DrawText("NPC", center.x, center.y - SHAPES_SIZE - FONT_SIZE, FONT_SIZE,
              YELLOW);
@@ -76,15 +76,15 @@ void attack_circle(MovableObject *object, NPC *npcs) {
     object->last_attack = GetTime();
     float circle_center_y = object->y + 50.0 / 2;
     float circle_center_x = object->x + 50.0 / 2;
-    Vector2 circle_center = {circle_center_y, circle_center_x};
-    DrawCircleLines(circle_center_y, circle_center_x, 100, BLUE);
-    DrawCircleLines(circle_center_y, circle_center_x, 70, BLUE);
-    DrawCircleLines(circle_center_y, circle_center_x, 30, BLUE);
+    Vector2 circle_center = {circle_center_x, circle_center_y};
+    DrawCircleLines(circle_center_x, circle_center_y, 100, BLUE);
+    DrawCircleLines(circle_center_x, circle_center_y, 70, BLUE);
+    DrawCircleLines(circle_center_x, circle_center_y, 30, BLUE);
     for (int i = 0; i < NUM_OF_NPCS; i++) {
       if (npcs[i].is_dead) {
         continue;
       }
-      Rectangle rect = {npcs[i].y, npcs[i].x, 50, 50};
+      Rectangle rect = {npcs[i].x, npcs[i].y, 50, 50};
       bool is_coliison = CheckCollisionCircleRec(circle_center, 100, rect);
       if (is_coliison) {
         object->points++;
@@ -198,4 +198,41 @@ ShapeCenter get_shape_center(NPC *npc) {
     break;
   }
   return center;
+}
+
+void draw_projectile(Projectile *projectile) {
+  if (projectile->alive)
+    DrawCircle(projectile->x, projectile->y, 10, PURPLE);
+}
+
+void move_projectile(Projectile *projectile) {
+  if (!projectile->alive) {
+    return;
+  }
+  projectile->x += projectile->vx;
+  projectile->y += projectile->vy;
+  if (projectile->x < 0 || projectile->x > WIDTH || projectile->y < 0 ||
+      projectile->y > HEIGHT) {
+    projectile->alive = false;
+  }
+}
+
+void shoot_projectile(MovableObject *object, Projectile *projectile) {
+  float speed = 1.0f;
+  if (IsKeyPressed(KEY_SPACE)) {
+    projectile->y = object->y;
+    projectile->x = object->x;
+    printf("shooting\n");
+    projectile->alive = true;
+    float screen_height = (float)GetScreenHeight() / 2;
+    float screen_width = (float)GetScreenWidth() / 2;
+    printf("%f by %f\n", screen_height, screen_width);
+    float my = screen_height - projectile->y;
+    float mx = screen_width - projectile->x;
+    // float my = 10.0f - projectile->y;
+    // float mx = 10.0f - projectile->x;
+    float distance = sqrt(my * my + mx * mx);
+    projectile->vy = (my / distance) * speed;
+    projectile->vx = (mx / distance) * speed;
+  }
 }
