@@ -61,6 +61,11 @@ typedef struct {
   bool alive;
 } Projectile;
 
+typedef struct {
+  float x;
+  float y;
+} ClosestTarget;
+
 extern int points_left;
 extern float npcs_speed;
 extern float player_attack_speed;
@@ -77,4 +82,6 @@ ShapeCenter get_shape_center(NPC *npc);
 void draw_projectile(Projectile *projectile);
 // void move_projectile(Projectile *projectile, NPC *target);
 void move_projectile(Projectile *projectile);
-void shoot_projectile(MovableObject *object, Projectile *projectile);
+void shoot_projectile(MovableObject *object, Projectile *projectile,
+                      ClosestTarget target);
+ClosestTarget get_closest_target(NPC *npcs, MovableObject *object);

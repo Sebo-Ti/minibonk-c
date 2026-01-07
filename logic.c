@@ -201,38 +201,70 @@ ShapeCenter get_shape_center(NPC *npc) {
 }
 
 void draw_projectile(Projectile *projectile) {
-  if (projectile->alive)
-    DrawCircle(projectile->x, projectile->y, 10, PURPLE);
+  for (int i = 0; i < NUM_OF_NPCS; i++) {
+    if (projectile[i].alive)
+      DrawCircle(projectile[i].x, projectile[i].y, 5, PURPLE);
+  }
 }
 
 void move_projectile(Projectile *projectile) {
-  if (!projectile->alive) {
-    return;
-  }
-  projectile->x += projectile->vx;
-  projectile->y += projectile->vy;
-  if (projectile->x < 0 || projectile->x > WIDTH || projectile->y < 0 ||
-      projectile->y > HEIGHT) {
-    projectile->alive = false;
+  for (int i = 0; i < NUM_OF_NPCS; i++) {
+    if (!projectile[i].alive) {
+      continue;
+    }
+    projectile[i].x += projectile[i].vx;
+    projectile[i].y += projectile[i].vy;
+    if (projectile[i].x < 0 || projectile[i].x > WIDTH || projectile[i].y < 0 ||
+        projectile[i].y > HEIGHT) {
+      projectile[i].alive = false;
+    }
   }
 }
 
-void shoot_projectile(MovableObject *object, Projectile *projectile) {
-  float speed = 1.0f;
+void shoot_projectile(MovableObject *object, Projectile *projectile,
+                      ClosestTarget target) {
+  float speed = 3.0f;
   if (IsKeyPressed(KEY_SPACE)) {
-    projectile->y = object->y;
-    projectile->x = object->x;
-    printf("shooting\n");
-    projectile->alive = true;
-    float screen_height = (float)GetScreenHeight() / 2;
-    float screen_width = (float)GetScreenWidth() / 2;
-    printf("%f by %f\n", screen_height, screen_width);
-    float my = screen_height - projectile->y;
-    float mx = screen_width - projectile->x;
-    // float my = 10.0f - projectile->y;
-    // float mx = 10.0f - projectile->x;
-    float distance = sqrt(my * my + mx * mx);
-    projectile->vy = (my / distance) * speed;
-    projectile->vx = (mx / distance) * speed;
+    for (int i = 0; i < NUM_OF_NPCS; i++) {
+      if (projectile[i].alive)
+        continue;
+      projectile[i].y = object->y;
+      projectile[i].x = object->x;
+      printf("shooting\n");
+      projectile[i].alive = true;
+      // float screen_height = (float)GetScreenHeight() / 2;
+      // float screen_width = (float)GetScreenWidth() / 2;
+      // printf("%f by %f\n", screen_height, screen_width);
+      // float my = screen_height - projectile[i].y;
+      // float mx = screen_width - projectile[i].x;
+      float my = target.y - projectile[i].y;
+      float mx = target.x - projectile[i].x;
+      float distance = sqrt(my * my + mx * mx);
+      projectile[i].vy = (my / distance) * speed;
+      projectile[i].vx = (mx / distance) * speed;
+      break;
+    }
   }
+}
+
+ClosestTarget get_closest_target(NPC *npcs, MovableObject *object) {
+  float closest_distance = 0.0;
+  int closes_object;
+  for (int i = 0; i < NUM_OF_NPCS; i++) {
+    float tx = npcs[i].x - object->x;
+    float ty = npcs[i].y - object->y;
+    float distance = sqrt(tx * tx + ty * ty);
+    if (closest_distance == 0.0) {
+      closest_distance = distance;
+      closes_object = i;
+    } else {
+      if (distance < closest_distance) {
+        closest_distance = distance;
+        closes_object = i;
+      }
+    }
+  }
+  printf("Closest object is %d\n", closes_object);
+  ClosestTarget target = {npcs[closes_object].x, npcs[closes_object].y};
+  return target;
 }

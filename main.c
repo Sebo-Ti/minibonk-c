@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 NPC npcs[NUM_OF_NPCS];
+Projectile fireballs[NUM_OF_NPCS];
 
 int main(void) {
   srand(time(NULL));
@@ -10,20 +11,19 @@ int main(void) {
   MovableObject object = {
       (float)WIDTH / 2, ((float)HEIGHT / 2), PLAYER_HP, "Stefan", 0, 0.0f};
   for (int i = 0; i < NUM_OF_NPCS; i++) {
-    int x = rand() % HEIGHT - 50;
+    int x = rand() % WIDTH - 50;
     if (x < 0) {
       x = 20;
     }
-    int y = rand() % WIDTH - 50;
+    int y = rand() % HEIGHT - 50;
     if (y < 0) {
       y = 0;
     }
-    int enemy_hp = rand() % 50;
+    int enemy_hp = rand() % 50 + 1;
     int random_shape = rand() % ENUM_COUNT;
     NPC enemy = {x, y, enemy_hp, i, false, 0, (MonsterShape)random_shape};
     npcs[i] = enemy;
   }
-  Projectile fireball;
 
   InitWindow(WIDTH, HEIGHT, "My Bouncy Text");
   SetTargetFPS(FPS_LIMIT);
@@ -45,9 +45,10 @@ int main(void) {
       CloseWindow();
       return 0;
     }
-    shoot_projectile(&object, &fireball);
-    move_projectile(&fireball);
-    draw_projectile(&fireball);
+    ClosestTarget target = get_closest_target(npcs, &object);
+    shoot_projectile(&object, fireballs, target);
+    move_projectile(fireballs);
+    draw_projectile(fireballs);
     current_hp(&object);
     EndDrawing();
   }
