@@ -2,10 +2,30 @@
 #include <math.h>
 #include <raylib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-int points_left = POINTS_WiN;
+int points_left = POINTS_WIN;
 float npcs_speed = 1.0;
 float player_attack_speed = 3.0;
+float spawn_time = 10.0;
+
+MovableObject create_player(const char *name) {
+  MovableObject object = {(float)WIDTH / 2,
+                          ((float)HEIGHT / 2),
+                          PLAYER_HP,
+                          name,
+                          0,
+                          0.0f,
+                          1.0f,
+                          10.0f};
+  return object;
+}
+
+void move_player(MovableObject *player, Direction *direction) {
+  player->x =
+      player->x + (1 * direction->left_right) * MOVEMENT_SPEED_MULTIPLIER;
+  player->y = player->y + (1 * direction->up_down) * MOVEMENT_SPEED_MULTIPLIER;
+}
 
 void draw_character_movable(MovableObject *object) {
   Rectangle character = {object->x, object->y, 50, 50};
@@ -14,7 +34,38 @@ void draw_character_movable(MovableObject *object) {
            YELLOW);
 }
 
+void create_npcs(NPC *npcs) {
+  for (int i = 0; i < NUM_OF_NPCS; i++) {
+    int x = rand() % WIDTH - 50;
+    if (x < 0) {
+      x = 20;
+    }
+    int y = rand() % HEIGHT - 50;
+    if (y < 0) {
+      y = 0;
+    }
+    int enemy_hp = rand() % 50 + 1;
+    int random_shape = rand() % ENUM_COUNT;
+    NPC enemy = {x, y, enemy_hp, i, false, 0, 0.0, (MonsterShape)random_shape};
+    npcs[i] = enemy;
+  }
+}
+
+void spawn_npcs(NPC *npcs) {
+  for (int i = 0; i < NUM_OF_NPCS; i++) {
+    if (npcs[i].is_dead && GetTime() - npcs[i].death_time >= spawn_time) {
+      npcs[i].is_dead = false;
+      npcs[i].hp = 50;
+      npcs[i].x = get_random_number((float)WIDTH, 50);
+      npcs[i].y = get_random_number((float)HEIGHT, 50);
+    }
+    draw_character_static(&npcs[i]);
+  }
+}
+
 void draw_character_static(NPC *object) {
+  if (object->is_dead)
+    return;
   Color object_color;
   if (object->hp >= 1) {
     switch (object->monster_shape) {
@@ -31,7 +82,6 @@ void draw_character_static(NPC *object) {
       object_color = GRAY;
       break;
     }
-    // object_color = RED;
   } else {
     object_color = ORANGE;
   }
@@ -88,9 +138,13 @@ void attack_circle(MovableObject *object, NPC *npcs) {
       bool is_coliison = CheckCollisionCircleRec(circle_center, 100, rect);
       if (is_coliison) {
         object->points++;
-        npcs[i].hp--;
-        // npcs[i].y += (npcs[i].y - 1.0) * (direction->left_right * -1);
-        // npcs[i].x += (npcs[i].x - 1.0) * (direction->up_down * -1);
+        int damage =
+            (rand() % (int)object->max_attack) /*  + (int)object->min_attack */;
+        if (damage <= object->min_attack) {
+          damage = object->min_attack;
+        }
+        npcs[i].hp -= damage;
+        // npcs[i].hp--;
         float knockback_direction_y = npcs[i].y - object->y;
         float knockback_direction_x = npcs[i].x - object->x;
         float knockback_distance =
@@ -101,6 +155,7 @@ void attack_circle(MovableObject *object, NPC *npcs) {
         if (npcs[i].hp <= 0 && !npcs[i].is_dead) {
           points_left = points_left - 10;
           npcs[i].is_dead = true;
+          npcs[i].death_time = GetTime();
           // npcs_speed += .5;
           player_attack_speed = player_attack_speed * 0.8;
         }
@@ -179,9 +234,12 @@ void move_npcs(NPC *npcs, MovableObject *target) {
   }
 }
 
-void current_hp(MovableObject *object) {
+void current_status(MovableObject *object) {
   char buffer[20];
   sprintf(buffer, "Current hp: %d", object->hp);
+  Color color = {255, 105, 180, 50};
+  Rectangle rect = {0, 0, WIDTH, 35};
+  DrawRectangleRec(rect, color);
   DrawText(buffer, 10, 10, FONT_SIZE, RED);
 }
 
@@ -249,22 +307,29 @@ void shoot_projectile(MovableObject *object, Projectile *projectile,
 
 ClosestTarget get_closest_target(NPC *npcs, MovableObject *object) {
   float closest_distance = 0.0;
-  int closes_object;
+  int closest_object;
   for (int i = 0; i < NUM_OF_NPCS; i++) {
     float tx = npcs[i].x - object->x;
     float ty = npcs[i].y - object->y;
     float distance = sqrt(tx * tx + ty * ty);
     if (closest_distance == 0.0) {
       closest_distance = distance;
-      closes_object = i;
+      closest_object = i;
     } else {
       if (distance < closest_distance) {
         closest_distance = distance;
-        closes_object = i;
+        closest_object = i;
       }
     }
   }
-  printf("Closest object is %d\n", closes_object);
-  ClosestTarget target = {npcs[closes_object].x, npcs[closes_object].y};
+  // printf("Closest object is %d\n", closest_object);
+  ClosestTarget target = {npcs[closest_object].x, npcs[closest_object].y};
   return target;
+}
+
+float get_random_number(float max, float min) {
+  float number = rand() % (int)max;
+  if (number <= min)
+    number = min;
+  return number;
 }
